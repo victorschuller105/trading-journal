@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daytrading Journal | Futures, FX, Crypto</title>
+<style>
+    :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #00e676; --red: #ff5252; --border: #333; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.5; }
+    h1, h2 { color: var(--accent); margin-top: 0; }
+    .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+    @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+    .card { background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
+    label { display: block; margin: 10px 0 4px; font-size: 0.9em; color: #aaa; }
+    input, select, textarea { width: 100%; padding: 8px; background: #2a2a2a; border: 1px solid var(--border); color: var(--text); border-radius: 4px; box-sizing: border-box; }
+    textarea { resize: vertical; min-height: 60px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    button { background: var(--accent); color: #000; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
+    button:hover { opacity: 0.9; }
+    .btn-del { background: var(--red); color: #fff; width: auto; padding: 5px 10px; margin: 0; font-size: 0.8em; }
+    .trade-item { border-bottom: 1px solid var(--border); padding: 15px 0; display: grid; grid-template-columns: 1fr 2fr; gap: 15px; align-items: start; }
+    .trade-item:last-child { border-bottom: none; }
+    .trade-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); cursor: pointer; }
+    .trade-meta { font-size: 0.9em; }
+    .pnl-pos { color: var(--accent); font-weight: bold; }
+    .pnl-neg { color: var(--red); font-weight: bold; }
+    .tag { display: inline-block; padding: 2px 6px; background: #333; border-radius: 3px; font-size: 0.8em; margin-right: 5px; }
+    .filters { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .filters select { width: auto; min-width: 150px; }
+    #imgPreview { margin-top: 10px; max-width: 100%; max-height: 150px; display: none; border-radius: 4px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <!-- EINGABE -->
+    <div>
+        <div class="card">
+            <h2>Neuer Trade</h2>
+            <form id="tradeForm">
+                <div class="row">
+                    <div>
+                        <label>Instrument</label>
+                        <select id="instrument" required>
+                            <optgroup label="Indizes (US)">
+                                <option value="MES">Micro S&P 500 (MES)</option>
+                                <option value="MNQ">Micro Nasdaq 100 (MNQ)</option>
+                                <option value="MYM">Micro Dow Jones (MYM)</option>
+                                <option value="MRTY">Micro Russell 2000 (MRTY)</option>
+                                <option value="ES">S&P 500 (ES)</option>
+                                <option value="NQ">Nasdaq 100 (NQ)</option>
+                                <option value="YM">Dow Jones (YM)</option>
+                                <option value="RTY">Russell 2000 (RTY)</option>
+                            </optgroup>
+                            <optgroup label="Rohstoffe & Metalle">
+                                <option value="CL">Crude Oil (CL)</option>
+                                <option value="NG">Natural Gas (NG)</option>
+                                <option value="GC">Gold (GC)</option>
+                                <option value="SI">Silver (SI)</option>
+                            </optgroup>
+                            <optgroup label="Währungen (FX)">
+                                <option value="6E">Euro FX (6E)</option>
+                                <option value="6J">Japanese Yen (6J)</option>
+                                <option value="6B">British Pound (6B)</option>
+                                <option value="6A">Australian Dollar (6A)</option>
+                                <option value="6C">Canadian Dollar (6C)</option>
+                            </optgroup>
+                            <optgroup label="Anleihen (Bonds)">
+                                <option value="ZN">10-Year T-Note (ZN)</option>
+                                <option value="ZB">30-Year T-Bond (ZB)</option>
+                                <option value="ZF">5-Year T-Note (ZF)</option>
+                                <option value="ZT">2-Year T-Note (ZT)</option>
+                            </optgroup>
+                            <optgroup label="Krypto">
+                                <option value="BTC/USD">Bitcoin (BTC/USD)</option>
+                                <option value="ETH/USD">Ethereum (ETH/USD)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Direction</label>
+                        <select id="direction" required>
+                            <option value="Long">Long</option>
+                            <option value="Short">Short</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div><label>Entry Preis</label><input type="number" step="any" id="entry" required></div>
+                    <div><label>Exit Preis</label><input type="number" step="any" id="exit" required></div>
+                </div>
+                <div class="row">
+                    <div><label>Stop Loss</label><input type="number" step="any" id="sl"></div>
+                    <div><label>Take Profit</label><input type="number" step="any" id="tp"></div>
+                </div>
+                <div class="row">
+                    <div><label>Position (Kontrakte/Size)</label><input type="number" step="any" id="size" required></div>
+                    <div><label>P&L ($)</label><input type="number" step="any" id="pnl" required></div>
+                </div>
+                <label>Strategie / Setup</label>
+                <input type="text" id="strategy" placeholder="z.B. Breakout, Pullback, FVG, SMT">
+                
+                <label>Chart Screenshot</label>
+                <input type="file" id="screenshot" accept="image/*">
+                <img id="imgPreview" alt="Preview">
+
+                <label>Notizen / Psychologie</label>
+                <textarea id="notes" placeholder="Regelkonformität, Emotionen, Fehler..."></textarea>
+                
+                <button type="submit">Trade speichern</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- HISTORIE -->
+    <div>
+        <div class="card">
+            <h2>Trading Historie</h2>
+            <div class="filters">
+                <select id="filterInst">
+                    <option value="all">Alle Instrumente</option>
+                    <optgroup label="Indizes">
+                        <option value="MES">MES</option><option value="MNQ">MNQ</option><option value="MYM">MYM</option><option value="MRTY">MRTY</option>
+                        <option value="ES">ES</option><option value="NQ">NQ</option><option value="YM">YM</option><option value="RTY">RTY</option>
+                    </optgroup>
+                    <optgroup label="Rohstoffe">
+                        <option value="CL">CL</option><option value="NG">NG</option><option value="GC">GC</option><option value="SI">SI</option>
+                    </optgroup>
+                    <optgroup label="Währungen">
+                        <option value="6E">6E</option><option value="6J">6J</option><option value="6B">6B</option><option value="6A">6A</option><option value="6C">6C</option>
+                    </optgroup>
+                    <optgroup label="Anleihen">
+                        <option value="ZN">ZN</option><option value="ZB">ZB</option><option value="ZF">ZF</option><option value="ZT">ZT</option>
+                    </optgroup>
+                    <optgroup label="Krypto">
+                        <option value="BTC/USD">BTC/USD</option><option value="ETH/USD">ETH/USD</option>
+                    </optgroup>
+                </select>
+                <select id="filterDir">
+                    <option value="all">Alle Directions</option>
+                    <option value="Long">Long</option>
+                    <option value="Short">Short</option>
+                </select>
+            </div>
+            <div id="tradeList"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('tradeForm');
+    const tradeList = document.getElementById('tradeList');
+    const fileInput = document.getElementById('screenshot');
+    const imgPreview = document.getElementById('imgPreview');
+    let currentImageData = null;
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800;
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                currentImageData = canvas.toDataURL('image/jpeg', 0.6);
+                imgPreview.src = currentImageData;
+                imgPreview.style.display = 'block';
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const trades = JSON.parse(localStorage.getItem('trades') || '[]');
+        
+        const newTrade = {
+            id: Date.now(),
+            date: new Date().toLocaleString('de-DE'),
+            instrument: document.getElementById('instrument').value,
+            direction: document.getElementById('direction').value,
+            entry: document.getElementById('entry').value,
+            exit: document.getElementById('exit').value,
+            sl: document.getElementById('sl').value,
+            tp: document.getElementById('tp').value,
+            size: document.getElementById('size').value,
+            pnl: parseFloat(document.getElementById('pnl').value),
+            strategy: document.getElementById('strategy').value,
+            notes: document.getElementById('notes').value,
+            image: currentImageData
+        };
+
+        trades.unshift(newTrade);
+        localStorage.setItem('trades', JSON.stringify(trades));
+        
+        form.reset();
+        imgPreview.style.display = 'none';
+        currentImageData = null;
+        renderTrades();
+    });
+
+    function deleteTrade(id) {
+        if(!confirm('Trade löschen?')) return;
+        let trades = JSON.parse(localStorage.getItem('trades') || '[]');
+        trades = trades.filter(t => t.id !== id);
+        localStorage.setItem('trades', JSON.stringify(trades));
+        renderTrades();
+    }
+
+    function renderTrades() {
+        const filterInst = document.getElementById('filterInst').value;
+        const filterDir = document.getElementById('filterDir').value;
+        let trades = JSON.parse(localStorage.getItem('trades') || '[]');
+        
+        if (filterInst !== 'all') trades = trades.filter(t => t.instrument === filterInst);
+        if (filterDir !== 'all') trades = trades.filter(t => t.direction === filterDir);
+
+        if (trades.length === 0) {
+            tradeList.innerHTML = '<p style="color:#666">Noch keine Trades gespeichert.</p>';
+            return;
+        }
+
+        tradeList.innerHTML = trades.map(t => `
+            <div class="trade-item">
+                <div>
+                    ${t.image ? `<img src="${t.image}" class="trade-img" onclick="window.open(this.src)">` : '<div style="height:100px;background:#2a2a2a;display:flex;align-items:center;justify-content:center;color:#666">Kein Bild</div>'}
+                </div>
+                <div class="trade-meta">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <strong>${t.instrument} | ${t.direction}</strong>
+                        <span class="${t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">${t.pnl >= 0 ? '+' : ''}${t.pnl} $</span>
+                    </div>
+                    <div style="color:#888; font-size:0.8em; margin:4px 0">${t.date}</div>
+                    <div>
+                        <span class="tag">E: ${t.entry}</span>
+                        <span class="tag">X: ${t.exit}</span>
+                        <span class="tag">SL: ${t.sl || '-'}</span>
+                        <span class="tag">TP: ${t.tp || '-'}</span>
+                        <span class="tag">Size: ${t.size}</span>
+                    </div>
+                    ${t.strategy ? `<div style="margin-top:5px"><strong>Setup:</strong> ${t.strategy}</div>` : ''}
+                    ${t.notes ? `<div style="margin-top:5px;font-style:italic;color:#bbb">${t.notes}</div>` : ''}
+                    <button class="btn-del" onclick="deleteTrade(${t.id})">Löschen</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('filterInst').addEventListener('change', renderTrades);
+    document.getElementById('filterDir').addEventListener('change', renderTrades);
+    renderTrades();
+</script>
+</body>
+</html>
